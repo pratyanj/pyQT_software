@@ -76,6 +76,7 @@ class FenestrationProfileTests(unittest.TestCase):
         profiles = list_profiles(ProductKind.WINDOW, WindowType.SLIDING)
         keys = {p.key for p in profiles}
         self.assertIn("custom_window_multichamber_78", keys)
+        self.assertIn("al_window_component_channel_95", keys)
 
     def test_custom_profile_features_render_in_section(self):
         model = self._model_from_profile(
@@ -89,6 +90,16 @@ class FenestrationProfileTests(unittest.TestCase):
         layers = {s.get("layer") for s in hsec if s.get("type") == "rect"}
         self.assertIn("cavity", layers)
         self.assertIn("reinforcement", layers)
+
+    def test_reference_channel_profile_validates(self):
+        model = self._model_from_profile(
+            "al_window_component_channel_95",
+            ProductKind.WINDOW,
+            WindowType.SLIDING,
+            2100.0,
+            1500.0,
+        )
+        self.assertEqual(Validator.validate(model), [])
 
 
 if __name__ == "__main__":
