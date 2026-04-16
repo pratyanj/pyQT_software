@@ -1,0 +1,29 @@
+[
+  {
+    "key": "custom_window_multichamber_78",
+    "name": "Custom Window Multichamber 78",
+    "product_kind": "window",
+    "supported_types": ["fixed", "sliding", "casement"],
+    "frame_width": 62.0,
+    "frame_depth": 118.0,
+    "mullion_width": 58.0,
+    "default_glass_thickness": 24.0,
+    "min_glass_thickness": 18.0,
+    "max_glass_thickness": 32.0,
+    "default_panels": 2,
+    "threshold_height": 25.0,
+    "horizontal_features": [
+      { "layer": "cavity", "x": 0.06, "y": 0.08, "width": 0.20, "height": 0.18 },
+      { "layer": "cavity", "x": 0.06, "y": 0.30, "width": 0.20, "height": 0.18 },
+      { "layer": "cavity", "x": 0.06, "y": 0.54, "width": 0.20, "height": 0.16 },
+      { "layer": "cavity", "x": 0.06, "y": 0.74, "width": 0.20, "height": 0.16 },
+      { "layer": "thermal_break", "x": 0.32, "y": 0.30, "width": 0.10, "height": 0.40 },
+      { "layer": "reinforcement", "x": 0.46, "y": 0.18, "width": 0.18, "height": 0.58 }
+    ],
+    "vertical_features": [
+      { "layer": "cavity", "x": 0.10, "y": 0.10, "width": 0.22, "height": 0.24 },
+      { "layer": "cavity", "x": 0.36, "y": 0.10, "width": 0.22, "height": 0.24 },
+      { "layer": "thermal_break", "x": 0.64, "y": 0.08, "width": 0.10, "height": 0.28 }
+    ]
+  }
+]

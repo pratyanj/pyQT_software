@@ -42,6 +42,18 @@ MATERIALS = {
         "specular":  (0.82, 0.85, 0.88, 1.0),
         "shininess": 60.0,
     },
+    "door_leaf": {
+        "ambient":   (0.50, 0.54, 0.58, 1.0),
+        "diffuse":   (0.74, 0.79, 0.84, 1.0),
+        "specular":  (0.88, 0.90, 0.93, 1.0),
+        "shininess": 45.0,
+    },
+    "threshold": {
+        "ambient":   (0.38, 0.40, 0.44, 1.0),
+        "diffuse":   (0.61, 0.65, 0.70, 1.0),
+        "specular":  (0.80, 0.82, 0.86, 1.0),
+        "shininess": 35.0,
+    },
 }
 
 # Edge colours per layer
@@ -49,6 +61,8 @@ EDGE_COLORS = {
     "frame":   (0.28, 0.30, 0.36, 1.0),
     "glass":   (0.30, 0.55, 0.85, 0.55),
     "mullion": (0.28, 0.30, 0.36, 1.0),
+    "door_leaf": (0.32, 0.36, 0.42, 1.0),
+    "threshold": (0.28, 0.30, 0.36, 1.0),
 }
 
 

@@ -51,6 +51,19 @@ LAYER_STYLES: dict[str, LayerStyle] = {
         pen_color="#4A5568",
         pen_width=2.0,
     ),
+    # Door leaf
+    "door_leaf": LayerStyle(
+        fill_color="#D6DEE8",
+        pen_color="#5C6B7A",
+        pen_width=1.8,
+        opacity=1.0,
+    ),
+    # Door threshold / track
+    "threshold": LayerStyle(
+        fill_color="#BFC9D4",
+        pen_color="#5C6B7A",
+        pen_width=1.8,
+    ),
     # Gasket / seal
     "gasket": LayerStyle(
         fill_color="#2D3748",
@@ -62,6 +75,24 @@ LAYER_STYLES: dict[str, LayerStyle] = {
         fill_color="#E8ECF1",
         pen_color="#A0AEC0",
         pen_width=0.5,
+    ),
+    # Internal cavity / chamber in profile section
+    "cavity": LayerStyle(
+        fill_color="#F7FAFC",
+        pen_color="#A0AEC0",
+        pen_width=0.8,
+    ),
+    # Reinforcement chamber / insert
+    "reinforcement": LayerStyle(
+        fill_color="#9CA3AF",
+        pen_color="#4B5563",
+        pen_width=1.0,
+    ),
+    # Thermal break strip
+    "thermal_break": LayerStyle(
+        fill_color="#F6AD55",
+        pen_color="#C05621",
+        pen_width=1.0,
     ),
     # Dimension lines & annotations
     "dimension": LayerStyle(

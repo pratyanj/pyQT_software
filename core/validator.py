@@ -78,6 +78,10 @@ class Validator:
 
         profile = get_profile(model.profile_key)
         if profile is not None:
+            if profile.product_kind != model.product_kind:
+                errors.append("Selected profile does not match product type")
+            if model.window_type not in profile.supported_types:
+                errors.append("Selected profile does not support this design type")
             if model.glass_thickness < profile.min_glass_thickness:
                 errors.append(
                     f"Glass thickness too low for selected profile ({profile.min_glass_thickness:.0f} mm min)"
@@ -86,5 +90,7 @@ class Validator:
                 errors.append(
                     f"Glass thickness too high for selected profile ({profile.max_glass_thickness:.0f} mm max)"
                 )
+        else:
+            errors.append(f"Unknown profile key: {model.profile_key}")
 
         return errors

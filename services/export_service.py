@@ -1,12 +1,12 @@
 """
-Export service – render the current canvas to PNG or PDF.
+Export service for PNG and PDF outputs.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
-from PySide6.QtCore import QRectF, QMarginsF, Qt
+from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QImage, QPainter, QPageLayout, QPageSize, QColor, QFont
 
 from config.settings import EXPORT
@@ -18,8 +18,6 @@ if TYPE_CHECKING:
 
 class ExportService:
     """High-resolution export for PNG and PDF formats."""
-
-    # ── PNG export ──────────────────────────────────────────────────
 
     @staticmethod
     def export_png(
@@ -40,10 +38,7 @@ class ExportService:
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         scene.render(painter, QRectF(0, 0, width, height), rect)
         painter.end()
-
         image.save(filepath)
-
-    # ── PDF export ──────────────────────────────────────────────────
 
     @staticmethod
     def export_pdf(
@@ -69,19 +64,18 @@ class ExportService:
 
         page_rect = QRectF(printer.pageRect(QPrinter.Unit.DevicePixel))
 
-        # Title block
         if model is not None:
             title_h = page_rect.height() * 0.08
             painter.setFont(QFont("Segoe UI", 12, QFont.Weight.Bold))
             painter.drawText(
-                QRectF(page_rect.x(), page_rect.y(),
-                       page_rect.width(), title_h),
+                QRectF(page_rect.x(), page_rect.y(), page_rect.width(), title_h),
                 Qt.AlignmentFlag.AlignCenter,
-                f"Fenestration Designer — "
-                f"{model.window_type.value.capitalize()}  "
-                f"{model.width:.0f} × {model.height:.0f} mm"
+                (
+                    f"Fenestration Designer - {model.product_kind.value.title()} / "
+                    f"{model.window_type.value.replace('_', ' ').title()} - "
+                    f"{model.width:.0f} x {model.height:.0f} mm"
+                ),
             )
-            # Shrink draw area below title
             page_rect.setTop(page_rect.top() + title_h)
 
         scene.render(painter, page_rect, source_rect)

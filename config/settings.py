@@ -3,11 +3,15 @@ Application-wide configuration settings for Fenestration Designer.
 """
 
 APP_NAME = "Fenestration Designer"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 APP_DESCRIPTION = "Parametric window & door designer with cross-section views"
+CUSTOM_PROFILE_FILE = "config/custom_profiles.json"
 
 # ── Default window model values ──────────────────────────────────────
 DEFAULTS = {
+    "product_kind": "window",
+    "window_type": "fixed",
+    "profile_key": "win_basic_50",
     "width": 1200.0,
     "height": 1000.0,
     "frame_width": 50.0,
@@ -15,6 +19,7 @@ DEFAULTS = {
     "glass_thickness": 6.0,
     "num_panels": 1,
     "mullion_width": 50.0,
+    "threshold_height": 25.0,
 }
 
 # ── Canvas settings ──────────────────────────────────────────────────

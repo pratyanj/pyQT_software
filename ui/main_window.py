@@ -1,47 +1,48 @@
 """
-Main application window – assembles toolbar, input panel, and canvas/viewport.
+Main application window.
 
-Orchestrates the signal flow:
-    InputPanel (parameters_changed) ──→ _update_view()
-    Toolbar    (view_changed)       ──→ _on_view_changed()
-
-Uses a QStackedWidget to switch between:
-    index 0 → DesignCanvas   (2-D views: front, H-section, V-section)
-    index 1 → Viewport3D     (3-D OpenGL view)
+Assembles toolbar, input panel, 2-D canvas, and 3-D viewport.
 """
 
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout,
-    QSplitter, QStatusBar, QFileDialog, QMessageBox,
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QSplitter,
+    QStatusBar,
+    QFileDialog,
+    QMessageBox,
     QStackedWidget,
 )
 
 from config.settings import APP_NAME, APP_VERSION
 from core.enums import ViewMode
+from core.profile_library import get_profile
 from core.validator import Validator
 from engine.generator import FrontViewGenerator
 from engine.cross_section import CrossSectionGenerator
 from engine.generator_3d import Generator3D
 from renderer.canvas import DesignCanvas
 from renderer.viewport_3d import Viewport3D
+from services.export_service import ExportService
+from services.file_service import FileService
 from ui.panels.input_panel import InputPanel
 from ui.panels.toolbar import Toolbar
-from services.file_service import FileService
-from services.export_service import ExportService
 
 
 class MainWindow(QMainWindow):
     """Top-level application window."""
 
+    _FILE_FILTER = "Fenestration Design (*.fend);;JSON Files (*.json);;All Files (*)"
+
     def __init__(self):
         super().__init__()
-        self.setWindowTitle(f"{APP_NAME}  v{APP_VERSION}")
+        self.setWindowTitle(f"{APP_NAME} v{APP_VERSION}")
         self.setMinimumSize(1200, 800)
 
-        # State
         self._current_view = ViewMode.FRONT
         self._front_gen = FrontViewGenerator()
         self._section_gen = CrossSectionGenerator()
@@ -54,8 +55,6 @@ class MainWindow(QMainWindow):
         self._wire_signals()
         self._update_view()
 
-    # ── UI construction ─────────────────────────────────────────────
-
     def _build_ui(self):
         central = QWidget()
         self.setCentralWidget(central)
@@ -64,44 +63,31 @@ class MainWindow(QMainWindow):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # Toolbar
         self.toolbar = Toolbar()
         root.addWidget(self.toolbar)
 
-        # Content area (splitter: left panel + stacked canvas/viewport)
         splitter = QSplitter(Qt.Orientation.Horizontal)
-
         self.input_panel = InputPanel()
         splitter.addWidget(self.input_panel)
 
-        # Stacked widget: 2-D canvas  (index 0)
-        #                  3-D viewport (index 1)
         self._stack = QStackedWidget()
-
         self.canvas = DesignCanvas()
-        self._stack.addWidget(self.canvas)       # index 0
-
+        self._stack.addWidget(self.canvas)
         self.viewport_3d = Viewport3D()
-        self._stack.addWidget(self.viewport_3d)  # index 1
-
+        self._stack.addWidget(self.viewport_3d)
         splitter.addWidget(self._stack)
 
         splitter.setStretchFactor(0, 0)
         splitter.setStretchFactor(1, 1)
         splitter.setHandleWidth(2)
-
         root.addWidget(splitter)
 
-        # Status bar
         self._status = QStatusBar()
         self.setStatusBar(self._status)
-        self._status.showMessage("Ready — adjust parameters to begin")
-
-    # ── Signal wiring ───────────────────────────────────────────────
+        self._status.showMessage("Ready - adjust parameters to begin")
 
     def _wire_signals(self):
         self.input_panel.parameters_changed.connect(self._update_view)
-
         self.toolbar.view_changed.connect(self._on_view_changed)
         self.toolbar.zoom_in_clicked.connect(self._zoom_in)
         self.toolbar.zoom_out_clicked.connect(self._zoom_out)
@@ -111,7 +97,22 @@ class MainWindow(QMainWindow):
         self.toolbar.export_png_clicked.connect(self._export_png)
         self.toolbar.export_pdf_clicked.connect(self._export_pdf)
 
-    # ── Core update loop ────────────────────────────────────────────
+    def _format_type_name(self, model) -> str:
+        return model.window_type.value.replace("_", " ").title()
+
+    def _format_info(self, model) -> str:
+        profile_name = model.profile_key
+        profile = get_profile(model.profile_key)
+        if profile is not None:
+            profile_name = profile.name
+
+        return (
+            f"{model.product_kind.value.title()} | "
+            f"{self._format_type_name(model)} | "
+            f"{model.width:.0f} x {model.height:.0f} mm | "
+            f"{model.num_panels} panel(s) | "
+            f"{profile_name}"
+        )
 
     def _on_view_changed(self, mode: ViewMode):
         self._current_view = mode
@@ -122,29 +123,20 @@ class MainWindow(QMainWindow):
 
         errors = Validator.validate(model)
         if errors:
-            self._status.showMessage(f"⚠  {'; '.join(errors)}")
+            self._status.showMessage(f"Validation: {'; '.join(errors)}")
             return
 
-        info = (
-            f"{model.window_type.value.capitalize()}  |  "
-            f"{model.width:.0f} × {model.height:.0f} mm  |  "
-            f"{model.num_panels} panel(s)"
-        )
+        info = self._format_info(model)
 
-        # ── 3-D view ───────────────────────────────────────────────
         if self._current_view == ViewMode.VIEW_3D:
             self._stack.setCurrentIndex(1)
-            shapes_3d = self._gen_3d.generate(model)
-            self.viewport_3d.set_shapes(shapes_3d)
+            self.viewport_3d.set_shapes(self._gen_3d.generate(model))
             self._status.showMessage(
-                f"3D View  —  {info}  |  "
-                "Left-drag: orbit · Right-drag: pan · Scroll: zoom"
+                f"3D View - {info} | Left-drag: orbit | Right-drag: pan | Scroll: zoom"
             )
             return
 
-        # ── 2-D views ──────────────────────────────────────────────
         self._stack.setCurrentIndex(0)
-
         if self._current_view == ViewMode.FRONT:
             shapes = self._front_gen.generate(model)
             view_label = "Front View"
@@ -156,9 +148,7 @@ class MainWindow(QMainWindow):
             view_label = "Vertical Section"
 
         self.canvas.draw_shapes(shapes)
-        self._status.showMessage(f"{view_label}  —  {info}")
-
-    # ── Zoom helpers (work for both 2-D and 3-D) ───────────────────
+        self._status.showMessage(f"{view_label} - {info}")
 
     def _zoom_in(self):
         if self._current_view == ViewMode.VIEW_3D:
@@ -180,55 +170,47 @@ class MainWindow(QMainWindow):
         else:
             self.canvas.fit_to_view()
 
-    # ── File operations ─────────────────────────────────────────────
-
-    _FILE_FILTER = "Fenestration Design (*.fend);;JSON Files (*.json);;All Files (*)"
-
     def _save(self):
         model = self.input_panel.get_parameters()
         path, _ = QFileDialog.getSaveFileName(
-            self, "Save Design", self._current_file or "",
-            self._FILE_FILTER,
+            self, "Save Design", self._current_file or "", self._FILE_FILTER
         )
         if path:
             self._file_svc.save(model, path)
             self._current_file = path
-            self._status.showMessage(f"✅  Saved → {path}")
+            self._status.showMessage(f"Saved -> {path}")
 
     def _load(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, "Open Design", "", self._FILE_FILTER,
+            self, "Open Design", "", self._FILE_FILTER
         )
-        if path:
-            model = self._file_svc.load(path)
-            if model:
-                self.input_panel.set_parameters(model)
-                self._current_file = path
-                self._update_view()
-                self._status.showMessage(f"📂  Loaded ← {path}")
-            else:
-                QMessageBox.warning(
-                    self, "Load Error",
-                    f"Could not load design from:\n{path}",
-                )
+        if not path:
+            return
+
+        model = self._file_svc.load(path)
+        if model is None:
+            QMessageBox.warning(self, "Load Error", f"Could not load design from:\n{path}")
+            return
+
+        self.input_panel.set_parameters(model)
+        self._current_file = path
+        self._update_view()
+        self._status.showMessage(f"Loaded <- {path}")
 
     def _export_png(self):
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Export PNG", "", "PNG Images (*.png)",
-        )
-        if path:
-            if self._current_view == ViewMode.VIEW_3D:
-                img = self.viewport_3d.grabFramebuffer()
-                img.save(path)
-            else:
-                self._export_svc.export_png(self.canvas, path)
-            self._status.showMessage(f"📸  PNG exported → {path}")
+        path, _ = QFileDialog.getSaveFileName(self, "Export PNG", "", "PNG Images (*.png)")
+        if not path:
+            return
+        if self._current_view == ViewMode.VIEW_3D:
+            self.viewport_3d.grabFramebuffer().save(path)
+        else:
+            self._export_svc.export_png(self.canvas, path)
+        self._status.showMessage(f"PNG exported -> {path}")
 
     def _export_pdf(self):
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Export PDF", "", "PDF Documents (*.pdf)",
-        )
-        if path:
-            model = self.input_panel.get_parameters()
-            self._export_svc.export_pdf(self.canvas, path, model)
-            self._status.showMessage(f"📄  PDF exported → {path}")
+        path, _ = QFileDialog.getSaveFileName(self, "Export PDF", "", "PDF Documents (*.pdf)")
+        if not path:
+            return
+        model = self.input_panel.get_parameters()
+        self._export_svc.export_pdf(self.canvas, path, model)
+        self._status.showMessage(f"PDF exported -> {path}")

@@ -29,6 +29,6 @@ class FileService:
             with open(filepath, "r", encoding="utf-8") as fh:
                 data = json.load(fh)
             return WindowModel.from_dict(data)
-        except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
+        except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
             print(f"[FileService] Failed to load '{filepath}': {exc}")
             return None
